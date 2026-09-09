@@ -9,7 +9,7 @@ from transformers import AutoTokenizer, AutoModelForSequenceClassification
 # Set page config
 st.set_page_config(
     page_title="Smart MCQ Solver & Classifier",
-    page_icon="🧠",
+    page_icon=" ",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -83,15 +83,6 @@ def safe_load_tokenizer(model_source, fallback_base_id):
     # If custom repo missing tokenizer assets, use the official base tokenizer
     return AutoTokenizer.from_pretrained(fallback_base_id)
 
-# Safe model loader with fallback
-def safe_load_model(model_source, fallback_base_id, device):
-    try:
-        mod = AutoModelForSequenceClassification.from_pretrained(model_source).to(device)
-    except Exception as e:
-        mod = AutoModelForSequenceClassification.from_pretrained(fallback_base_id).to(device)
-    mod.eval()
-    return mod
-
 # Cache model loading for fast inference
 @st.cache_resource(show_spinner="Loading NLP models...")
 def load_models(model_source_deb, model_source_rob):
@@ -99,11 +90,13 @@ def load_models(model_source_deb, model_source_rob):
     
     # DeBERTa
     tok_deb = safe_load_tokenizer(model_source_deb, "microsoft/deberta-v3-small")
-    mod_deb = safe_load_model(model_source_deb, "microsoft/deberta-v3-small", device)
+    mod_deb = AutoModelForSequenceClassification.from_pretrained(model_source_deb).to(device)
+    mod_deb.eval()
     
     # RoBERTa
     tok_rob = safe_load_tokenizer(model_source_rob, "roberta-base")
-    mod_rob = safe_load_model(model_source_rob, "roberta-base", device)
+    mod_rob = AutoModelForSequenceClassification.from_pretrained(model_source_rob).to(device)
+    mod_rob.eval()
     
     return tok_deb, mod_deb, tok_rob, mod_rob, device
 
@@ -137,11 +130,18 @@ def predict_single(prompt, a, b, c, d, e, tok_deb, mod_deb, tok_rob, mod_rob, de
                 p_rob = (p_rob + F.softmax(logits_rob_aug, dim=-1)[0].cpu().numpy()) / 2.0
                 
     if mode == "Ensemble (70% DeBERTa + 30% RoBERTa)":
-        probs = 0.70 * p_deb + 0.30 * p_rob
+        if p_deb is not None and p_rob is not None and len(p_deb) == len(p_rob) == 5:
+            probs = 0.70 * p_deb + 0.30 * p_rob
+        elif p_deb is not None and len(p_deb) == 5:
+            probs = p_deb
+        elif p_rob is not None and len(p_rob) == 5:
+            probs = p_rob
+        else:
+            probs = np.array([0.2, 0.2, 0.2, 0.2, 0.2])
     elif mode == "DeBERTa-v3-small Only":
-        probs = p_deb
+        probs = p_deb if (p_deb is not None and len(p_deb) == 5) else np.array([0.2, 0.2, 0.2, 0.2, 0.2])
     else:
-        probs = p_rob
+        probs = p_rob if (p_rob is not None and len(p_rob) == 5) else np.array([0.2, 0.2, 0.2, 0.2, 0.2])
         
     return probs
 
@@ -149,6 +149,10 @@ def predict_single(prompt, a, b, c, d, e, tok_deb, mod_deb, tok_rob, mod_rob, de
 with st.sidebar:
     st.image("https://huggingface.co/front/assets/huggingface_logo-noborder.svg", width=60)
     st.header("⚙️ Model Configuration")
+    
+    if st.button("🔄 Reload Models & Clear Cache", use_container_width=True):
+        st.cache_resource.clear()
+        st.rerun()
     
     deb_path = st.text_input(
         "DeBERTa Model Path / HF Repo", 
@@ -173,7 +177,7 @@ with st.sidebar:
     st.caption("🚀 Model: Fine-tuned Transformer for 5-Option Question Answering")
 
 # Main Page Layout
-st.markdown('<div class="main-title">🧠 Smart MCQ Solver AI</div>', unsafe_allow_html=True)
+st.markdown('<div class="main-title">  Smart MCQ Solver AI</div>', unsafe_allow_html=True)
 st.markdown('<div class="subtitle">Deep Learning inference engine for multi-choice question answering and ranking</div>', unsafe_allow_html=True)
 
 # Load Models
