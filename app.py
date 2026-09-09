@@ -83,6 +83,15 @@ def safe_load_tokenizer(model_source, fallback_base_id):
     # If custom repo missing tokenizer assets, use the official base tokenizer
     return AutoTokenizer.from_pretrained(fallback_base_id)
 
+# Safe model loader with fallback
+def safe_load_model(model_source, fallback_base_id, device):
+    try:
+        mod = AutoModelForSequenceClassification.from_pretrained(model_source).to(device)
+    except Exception as e:
+        mod = AutoModelForSequenceClassification.from_pretrained(fallback_base_id).to(device)
+    mod.eval()
+    return mod
+
 # Cache model loading for fast inference
 @st.cache_resource(show_spinner="Loading NLP models...")
 def load_models(model_source_deb, model_source_rob):
@@ -90,13 +99,11 @@ def load_models(model_source_deb, model_source_rob):
     
     # DeBERTa
     tok_deb = safe_load_tokenizer(model_source_deb, "microsoft/deberta-v3-small")
-    mod_deb = AutoModelForSequenceClassification.from_pretrained(model_source_deb).to(device)
-    mod_deb.eval()
+    mod_deb = safe_load_model(model_source_deb, "microsoft/deberta-v3-small", device)
     
     # RoBERTa
     tok_rob = safe_load_tokenizer(model_source_rob, "roberta-base")
-    mod_rob = AutoModelForSequenceClassification.from_pretrained(model_source_rob).to(device)
-    mod_rob.eval()
+    mod_rob = safe_load_model(model_source_rob, "roberta-base", device)
     
     return tok_deb, mod_deb, tok_rob, mod_rob, device
 
