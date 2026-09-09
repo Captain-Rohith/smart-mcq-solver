@@ -21,31 +21,33 @@ st.markdown("""
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     }
     
+    /* Adaptive Dark / Light Mode Support */
     .app-header {
-        border-bottom: 1px solid #e2e8f0;
-        padding-bottom: 1rem;
+        border-bottom: 1px solid rgba(128, 128, 128, 0.25);
+        padding-bottom: 0.75rem;
         margin-bottom: 1.5rem;
     }
     
     .app-title {
-        font-size: 1.6rem;
+        font-size: 1.65rem;
         font-weight: 600;
         letter-spacing: -0.02em;
-        color: #0f172a;
+        color: var(--text-color, currentColor);
         margin: 0;
     }
     
     .app-subtitle {
         font-size: 0.92rem;
-        color: #64748b;
+        color: var(--text-color, currentColor);
+        opacity: 0.75;
         margin-top: 0.25rem;
     }
     
     /* Result Cards */
     .result-container {
-        border: 1px solid #cbd5e1;
+        border: 1px solid rgba(128, 128, 128, 0.25);
         border-radius: 6px;
-        background: #f8fafc;
+        background: rgba(128, 128, 128, 0.08);
         padding: 1.25rem;
         margin-bottom: 1rem;
     }
@@ -55,14 +57,15 @@ st.markdown("""
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.05em;
-        color: #475569;
+        color: var(--text-color, currentColor);
+        opacity: 0.75;
         margin-bottom: 0.25rem;
     }
     
     .result-value {
-        font-size: 2rem;
+        font-size: 2.2rem;
         font-weight: 700;
-        color: #0f172a;
+        color: var(--text-color, currentColor);
         font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     }
     
@@ -70,10 +73,11 @@ st.markdown("""
         display: inline-block;
         font-size: 0.75rem;
         font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-        background: #e2e8f0;
-        color: #334155;
-        padding: 0.2rem 0.5rem;
+        background: rgba(128, 128, 128, 0.15);
+        color: var(--text-color, currentColor);
+        padding: 0.25rem 0.55rem;
         border-radius: 4px;
+        border: 1px solid rgba(128, 128, 128, 0.2);
         margin-right: 0.5rem;
     }
 </style>
