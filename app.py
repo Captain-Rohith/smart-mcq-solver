@@ -73,18 +73,28 @@ SAMPLE_QUESTIONS = [
     }
 ]
 
+# Safe tokenizer loader with fallback
+def safe_load_tokenizer(model_source, fallback_base_id):
+    for use_fast in [True, False]:
+        try:
+            return AutoTokenizer.from_pretrained(model_source, use_fast=use_fast)
+        except Exception:
+            pass
+    # If custom repo missing tokenizer assets, use the official base tokenizer
+    return AutoTokenizer.from_pretrained(fallback_base_id)
+
 # Cache model loading for fast inference
 @st.cache_resource(show_spinner="Loading NLP models...")
 def load_models(model_source_deb, model_source_rob):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     
     # DeBERTa
-    tok_deb = AutoTokenizer.from_pretrained(model_source_deb)
+    tok_deb = safe_load_tokenizer(model_source_deb, "microsoft/deberta-v3-small")
     mod_deb = AutoModelForSequenceClassification.from_pretrained(model_source_deb).to(device)
     mod_deb.eval()
     
     # RoBERTa
-    tok_rob = AutoTokenizer.from_pretrained(model_source_rob)
+    tok_rob = safe_load_tokenizer(model_source_rob, "roberta-base")
     mod_rob = AutoModelForSequenceClassification.from_pretrained(model_source_rob).to(device)
     mod_rob.eval()
     
